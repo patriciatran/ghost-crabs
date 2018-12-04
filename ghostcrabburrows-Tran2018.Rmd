@@ -1,0 +1,206 @@
+---
+title: "Atlantic Ghost Crabs (Ocypode quadrata) Burrows Distribution and Activity along the South Portion of Nanny Goat Beach, Sapelo Island, Georgia, USA."
+author: "Patricia Tran"
+date: '2018-11-08'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Ghost Crab Burrows
+
+Ghost crab burrows were sampled on Nanny Goat Beach from October 21 to October 24, 2018 during the Sapelo Field Course 2018. Transects perpendicular to the tide line, from the tide line to the edge of the dunes/backdunes transition, were done every 2 meter from the Pavillon to the very south of the Beach, where the creeks enters the marsh.
+
+
+```{r}
+data <- read.csv("all-burrows-2018.csv", header=TRUE)
+
+summary(data)
+# We can see there were 259 burrows on the beach, and 264 burrows on the sand.
+
+# Relationship between Width and Height of the burrows, coloured by environment
+plot(data$Height ~ data$Width, col=data$Environment, xlab="Width (mm)", 
+     ylab="Height (mm)", main="Correlation between Height and Width of Burrows")
+
+cor(data$Height, data$Width)
+linearMod <- lm(Height ~ Width, data=data)
+(linearMod)
+summary(linearMod)
+# Calculate the area of the burrows: formula for the area of an oval: PI x (height/2) x (width/2)
+
+
+data$Area <- as.numeric(pi*(data$Height/2)*(data$Width/2))
+
+hist(data$Area, xlab="Area of burrows (mm2)", main="Histogram of Area")
+
+#The majority of burrows are "small" 
+Dunes <- subset(data, data$Environment=="Dunes")
+Beach <- subset(data, data$Environment=="Beach")
+
+hist(Dunes$Area, ylim=c(0,100), xlim=c(0,5000))
+
+hist(Beach$Area, ylim=c(0,100),xlim=c(0,5000))
+
+# Is the data normally distributed?
+shapiro.test(Dunes$Area)
+shapiro.test(Beach$Area)
+
+qqnorm(Dunes$Area); qqline(Dunes$Area, col=2)
+qqnorm(Beach$Area); qqline(Beach$Area, col=2)
+
+# Summarize
+summary(Dunes$Area)
+summary(Beach$Area)
+
+# Compare the normal distribtion using a standard two-sided z test
+library(BSDA)
+z.test(Dunes$Area, sigma.x=0.5, y=Beach$Area, sigma.y=0.5, mu=2)
+
+# Plot Area vs Environments
+#boxplot(data$Area ~ data$Environment, xlab="Environment", ylab="Area of each burrow (mm2)", main="Area of burrows by environment type")
+
+# with ggplot
+
+library(ggplot2)
+library(ggsignif)
+
+ggplot(data, aes(x=Environment, y=Area)) + 
+  geom_boxplot() +
+  geom_signif(comparisons = list(c("Beach", "Dunes")), 
+              map_signif_level=TRUE)
+
+
+p <- ggplot(data, aes(x=Environment, y=Area)) + 
+    geom_violin(trim=FALSE) +
+  geom_signif(comparisons = list(c("Beach", "Dunes")), 
+              map_signif_level=TRUE)
+
+p
+
+
+# Measure the variance in the beach and dunes data
+range(Beach$Area)
+range(Dunes$Area)
+
+data_summary <- function(x) {
+   m <- mean(x)
+   ymin <- m-sd(x)
+   ymax <- m+sd(x)
+   return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+p + stat_summary(fun.data=data_summary)
+
+```
+
+## Activity Levels
+We used an activity scale to determine if the burrow were active or not. 0= Burrow hole not clear; 1= Clear burrow hole but not traces or sand kickback; 2= Clear hole plus 1 indicator (traces or kickback), 3= Very clear hole AND clear presence of traces and/or kickback
+
+```{r}
+# Plot activity by environment
+data$Activity <- as.vector(data$Activity)
+# Grouped Bar Plot
+counts.of.activity <- table(data$Environment, data$Activity)
+barplot(counts.of.activity, ylab=c(0,150), main="Activity level by environment type",
+  xlab="Activity Level Scale", col=c("Red","Yellow"),
+ 	legend = rownames(counts.of.activity), beside=TRUE)
+
+#ANOVA
+res.aov <- aov(Activity ~ Environment, data = data)
+# Summary of the analysis
+summary(res.aov)
+
+## Ok there is a significant difference between the activity levels between the beach and dunes, but how can I test if there is a significant different *within* each activity level scale, between the two environments?
+
+```
+
+## Orientation of the burrows between Dunes and Beaches
+We hypothesize that on the beach, the burrows would be away from the tidal lines, wherease on the dunes it doesn't matter.
+
+```{r}
+data$Direction <- as.vector(data$Direction)
+# Grouped Bar Plot
+counts.of.orientation <- table(data$Environment, data$Direction)
+barplot(counts.of.orientation, ylim = c(0,150), main="Orienation of the burrows by environment type",
+  xlab="Burrow orientation compared to tidal line", col=c("Red","Yellow"),
+ 	legend = rownames(counts.of.orientation), beside=TRUE)
+
+
+
+
+
+```
+
+## Map of Nanny Goat Beach with samples
+```{r}
+
+plot(data$Lat.DMS ~ data$Lon.DMS, col=data$Environment, cex=0.5)
+# red dots are Dunes, black are beach
+
+```
+
+Let's try to plot this into a 3D plot:
+```{r}
+library(scatterplot3d)
+
+s3d <- scatterplot3d(x = data$Lon.DMS, 
+                     y = data$Lat.DMS, 
+                     z = data$Elevation,
+                     cex.symbols=0.5,
+                     color=c(data$Environment),
+                     xlab="Longitude",
+                     ylab="Latitude",
+                     zlab="Elevation(m)",
+                     angle = 85)
+# Here the black = Beach and Red = Dunes
+```
+
+
+
+From here on, I move into ArcGIS to do the analysis of the points.
+
+## Point Density Analysis
+
+To do this, I go under Analysis, then Analyse Patterns, then Calculate Density. From this, we see that there is a high density towards the southern tip of the beach, between the second and last runnels, and before reaching the dunes. 
+```{r Map, out.width=500, out.height=500}
+library(knitr)
+include_graphics("/Users/patriciatran/Desktop/GIS-clustering-ghost-crabs.png")
+```
+
+## Nearest neighbor analysis
+GIS, import data, trace a tideline (create new tide feature), use the Tool Near Point to Line
+```{r}
+gis.data <- read.csv("ghost-crab-GIS-analysis.csv")
+plot(gis.data$Oval_Area_mm2~gis.data$Dist_near_tideline, col=gis.data$Environment,
+     xlab="Distance to tideline (m)",
+     ylab="Size of the burrow opening (mm2)")
+# Ok so clearly no relatioship between distance to shoreline and size of the burrows
+
+
+cor(x=gis.data$Dist_near_tideline, gis.data$Oval_Area_mm2)
+linearMod.disttide.area <- lm(Oval_Area_mm2 ~ Dist_near_tideline, data=gis.data)
+(linearMod.disttide.area)
+summary(linearMod.disttide.area)
+
+
+```
+
+## Distance between burrows
+Are the burrows in the dunes or on the shore closer to each other
+```{r}
+library(ggplot2)
+library(ggsignif)
+
+ggplot(gis.data, aes(x=Environment, y=Dist_near_burrow)) + 
+  geom_boxplot() +
+  geom_signif(comparisons = list(c("Beach", "Dunes")), 
+              map_signif_level=TRUE)+
+  ylab("Distance to nearest burrow(m)")+
+  xlab("Environment")+
+  theme_classic()
+
+
+```
+

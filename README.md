@@ -5,7 +5,7 @@ The aim of our study was to investigate beach habitat use by ghost crabs across 
 
 ## Contents of directory
 1. Data : Raw data files, and input files for R code
-2. Ghost-crab-GIS: Files for GIS analysis
+2. GhostCrab-GIS: Files for GIS analysis
 3. Report : Final report for class
 
-.Rmd : R code to generate figures and statistical analyses.
+ghostcrabburrows-Tran2018.Rmd.Rmd : R code to generate figures and statistical analyses.

@@ -9,3 +9,6 @@ The aim of our study was to investigate beach habitat use by ghost crabs across 
 3. Report : Final report for class
 
 ghostcrabburrows-Tran2018.Rmd : R code to generate figures and statistical analyses.
+
+## Download
+Don't use GitHub? No problem, click "Download ZIP" under the green menu in the top-right.

@@ -15,7 +15,7 @@ Ghost crab burrows were sampled on Nanny Goat Beach from October 21 to October 2
 
 
 ```{r}
-data <- read.csv("all-burrows-2018.csv", header=TRUE)
+data <- read.csv("~/Dropbox/Ghost Crabs Sapelo/all-burrows-2018.csv", header=TRUE)
 
 summary(data)
 # We can see there were 259 burrows on the beach, and 264 burrows on the sand.
@@ -39,9 +39,9 @@ hist(data$Area, xlab="Area of burrows (mm2)", main="Histogram of Area")
 Dunes <- subset(data, data$Environment=="Dunes")
 Beach <- subset(data, data$Environment=="Beach")
 
-hist(Dunes$Area, ylim=c(0,100), xlim=c(0,5000))
+hist(Beach$Area, ylim=c(0,100),xlim=c(0,5000), main="A. BURROWS", xlab="Size (area) of the burrow (mm2)")
+hist(Dunes$Area, ylim=c(0,100), xlim=c(0,5000), main="B. DUNES", xlab="Size (area) of the burrow (mm2)")
 
-hist(Beach$Area, ylim=c(0,100),xlim=c(0,5000))
 
 # Is the data normally distributed?
 shapiro.test(Dunes$Area)
@@ -69,7 +69,9 @@ library(ggsignif)
 ggplot(data, aes(x=Environment, y=Area)) + 
   geom_boxplot() +
   geom_signif(comparisons = list(c("Beach", "Dunes")), 
-              map_signif_level=TRUE)
+              map_signif_level=TRUE)+
+  ggtitle("C.")+
+  theme_classic()
 
 
 p <- ggplot(data, aes(x=Environment, y=Area)) + 
@@ -123,7 +125,7 @@ We hypothesize that on the beach, the burrows would be away from the tidal lines
 data$Direction <- as.vector(data$Direction)
 # Grouped Bar Plot
 counts.of.orientation <- table(data$Environment, data$Direction)
-barplot(counts.of.orientation, ylim = c(0,150), main="Orienation of the burrows by environment type",
+barplot(counts.of.orientation, ylim = c(0,150), main="Orientation of the burrows by environment type",
   xlab="Burrow orientation compared to tidal line", col=c("Red","Yellow"),
  	legend = rownames(counts.of.orientation), beside=TRUE)
 
@@ -188,7 +190,7 @@ summary(linearMod.disttide.area)
 ```
 
 ## Distance between burrows
-Are the burrows in the dunes or on the shore closer to each other
+Are the burrows in the dunes or on the shore closer to each other?
 ```{r}
 library(ggplot2)
 library(ggsignif)
@@ -201,6 +203,17 @@ ggplot(gis.data, aes(x=Environment, y=Dist_near_burrow)) +
   xlab("Environment")+
   theme_classic()
 
+
+```
+
+## Additional figures
+Weather data
+```{r}
+weather <- read.csv("~/Documents/GitHub/ghost-crabs/Data/NOAA-Sapelo-Weather.tsv", sep="\t")
+# Get daily averages:
+daily_weather <- aggregate(weather[, 3:ncol(weather)], list(weather$DD), mean)
+
+plot(daily_weather$WDIR ~ daily_weather$Group.1, xlab="Day (October)", ylab="Wind direction")
 
 ```
 
